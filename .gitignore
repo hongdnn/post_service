@@ -1,0 +1,18 @@
+# Virtual environments
+venv/
+.env/
+*.env
+.venv/
+
+# Distribution files
+build/
+dist/
+*.egg-info/
+
+# System files
+.DS_Store
+
+# IDE and editor settings
+.vscode/
+.idea/
+
