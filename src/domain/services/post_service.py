@@ -1,13 +1,12 @@
 import uuid
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 import re
 from mypy_boto3_s3.client import S3Client
 
 from src.data.repositories.media_repository import MediaRepositoryInterface
 from src.data.repositories.post_repository import PostRepositoryInterface
-from src.domain.entities.media import Media
 from src.domain.entities.post import Post
 from src import Config
 
@@ -19,6 +18,10 @@ class PostServiceInterface(ABC):
 
     @abstractmethod
     async def generate_presign_urls(self, files: list) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    async def fetch_posts(self, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
         pass
 
 
@@ -58,6 +61,15 @@ class PostService(PostServiceInterface):
                 )
                 response_data.append({"key": key, "url": url})
             return {"data": response_data, "status": 0, "message": "Generate presign urls success"}
+        except Exception as e:
+            print(f"Error: {e}")
+            return {"data": None, "status": 1, "message": "There's something wrong"}
+
+    async def fetch_posts(self, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
+        try:
+            response = await self._post_repository.fetch_posts(followee_ids, size, date)
+            posts_data = [post.model_dump() for post in response]  # Convert each Post to a dictionary
+            return {"data": posts_data, "status": 0, "message": "Fetch posts success"}
         except Exception as e:
             print(f"Error: {e}")
             return {"data": None, "status": 1, "message": "There's something wrong"}

@@ -1,5 +1,7 @@
 from enum import IntEnum
 from sqlalchemy import Column, String, Integer, CheckConstraint, Text, Float, TIMESTAMP, func, ForeignKey
+from sqlalchemy.orm import relationship
+
 from src.data.models.base import Base
 
 class MediaType(IntEnum):
@@ -24,6 +26,7 @@ class MediaModel(Base):
     video_duration = Column(Integer)
     video_frame_rate = Column(Integer)
 
+    post = relationship("PostModel", back_populates="medias")
 
     # Add constraint to ensure only valid enum values
     __table_args__ = (

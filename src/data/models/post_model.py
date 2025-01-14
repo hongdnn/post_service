@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Text, TIMESTAMP, func, Float
+from sqlalchemy.orm import relationship
 
 from src.data.models.base import Base
 
@@ -14,4 +15,7 @@ class PostModel(Base):
     longitude = Column(Float)
     created_date = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_date = Column(TIMESTAMP(timezone=True))
+
+    # Define relationship with MediaModel
+    medias = relationship("MediaModel", back_populates="post", lazy="joined")
 

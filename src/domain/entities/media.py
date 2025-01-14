@@ -56,6 +56,6 @@ class Media(BaseModel):
             width=media_model.width,
             height=media_model.height,
             video_duration=media_model.video_duration,
-            video_frame_rate=media_model.created_date,
+            video_frame_rate=media_model.video_frame_rate,
         )
 

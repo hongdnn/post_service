@@ -4,6 +4,7 @@ from typing import Union, Optional
 from pydantic import BaseModel
 
 from src.data.models.post_model import PostModel
+from src.domain.entities.media import Media
 
 
 class Post(BaseModel):
@@ -15,6 +16,7 @@ class Post(BaseModel):
     longitude: Optional[float] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
+    medias: Optional[Media] = None
 
 
     @classmethod
