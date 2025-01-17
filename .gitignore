@@ -2,6 +2,7 @@
 venv/
 .env/
 *.env
+.env.dev
 .venv/
 
 # Distribution files

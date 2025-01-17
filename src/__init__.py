@@ -8,7 +8,7 @@ from src.presentation import blueprints
 
 def create_app():
     app = Quart(__name__)
-    app = cors(app, allow_origin="http://localhost:8080")
+    app = cors(app, allow_origin=[Config.CHAT_SERVICE_BASE_URL, Config.FRONTEND_BASE_URL])
     app.config.from_object(Config)
     container = Container()
     container.wire(

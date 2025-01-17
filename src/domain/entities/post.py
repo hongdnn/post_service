@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Union, Optional
+from typing import Union, Optional, List
 from pydantic import BaseModel
 
 from src.data.models.post_model import PostModel
@@ -16,7 +16,7 @@ class Post(BaseModel):
     longitude: Optional[float] = None
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
-    medias: Optional[Media] = None
+    medias: Optional[List[Media]] = None
 
 
     @classmethod
