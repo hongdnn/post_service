@@ -114,3 +114,49 @@ async def fetch_posts(user_info: dict, post_service: PostService = Provide[Conta
             "status": 1,
             "message": "An error occurred"
         }), 400
+
+
+@post_bp.route('/profile', methods=['GET'])
+@token_required()
+@inject
+async def fetch_profile_posts(post_service: PostService = Provide[Container.post_service]):
+    """Fetch list of posts in a user profile."""
+    try:
+        size = request.args.get('size', default=10, type=int)
+        user_id = request.args.get('user_id', type=str)
+        date_str = request.args.get('date', type=str)
+        date = None
+        if date_str:
+            try:
+                date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            except ValueError as e:
+                return jsonify({"error": "Invalid date format", "status": 1, "message": str(e)}), 400
+
+        response = await post_service.fetch_posts([user_id], size, date)
+        if response.get('status') != 0:
+            return jsonify(response), 500
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                    f"{Config.CHAT_SERVICE_BASE_URL}/users/posts",
+                    json={"user_ids": [user_id]},
+                    headers={"Authorization": request.headers.get('Authorization')}
+            ) as user_response:
+                if user_response.status != 200:
+                    return jsonify({"status": 1, "message": "Failed to fetch user information"}), 500
+
+                user_data = await user_response.json()
+                user_map = {user['_id']: user for user in user_data.get('data', [])}
+
+                for post in response['data']:
+                    user_info = user_map.get(post['user_id'], {})
+                    post['user'] = user_info
+
+                return jsonify(response), 200
+
+    except Exception as error:
+        return jsonify({
+            "error": str(error),
+            "status": 1,
+            "message": "An error occurred"
+        }), 400
