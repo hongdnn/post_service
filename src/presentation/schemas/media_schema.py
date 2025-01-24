@@ -1,5 +1,5 @@
 from marshmallow import Schema, fields, validates, ValidationError
-from src.data.models.media_model import MediaModel, MediaType
+from src.data.models.media_model import MediaType
 
 
 

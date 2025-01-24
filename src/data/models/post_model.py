@@ -16,6 +16,8 @@ class PostModel(Base):
     created_date = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
     updated_date = Column(TIMESTAMP(timezone=True))
 
-    # Define relationship with MediaModel
+    # Define relationship with other models
     medias = relationship("MediaModel", back_populates="post", lazy="joined")
+    reactions = relationship("ReactionModel", back_populates="post", lazy="joined")
+
 

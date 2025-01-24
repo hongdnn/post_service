@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from src import Config
 from src.data.repositories.media_repository import MediaRepository
 from src.data.repositories.post_repository import PostRepository
+from src.data.repositories.reaction_repository import ReactionRepository
 from src.domain.services.post_service import PostService
+from src.domain.services.reaction_service import ReactionService
 
 
 class Container(containers.DeclarativeContainer):
@@ -46,9 +48,19 @@ class Container(containers.DeclarativeContainer):
         session=async_session
     )
 
+    reaction_repository = providers.Factory(
+        ReactionRepository,
+        session=async_session
+    )
+
     post_service = providers.Factory(
         PostService,
         post_repository=post_repository,
         media_repository=media_repository,
         s3_client= s3_client
+    )
+
+    reaction_service = providers.Factory(
+        ReactionService,
+        reaction_repository=reaction_repository
     )

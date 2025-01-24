@@ -12,7 +12,10 @@ def create_app():
     app.config.from_object(Config)
     container = Container()
     container.wire(
-        modules=['src.presentation.routes.post_route']
+        modules=[
+            'src.presentation.routes.post_route',
+            'src.presentation.routes.reaction_route'
+        ]
     )
     # Run the async database initialization
     init_db(app, container)
