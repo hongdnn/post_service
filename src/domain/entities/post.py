@@ -17,6 +17,8 @@ class Post(BaseModel):
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
     medias: Optional[List[Media]] = None
+    reaction_count: Optional[int] = None
+    is_reacted: Optional[bool] = None
 
 
     @classmethod
@@ -46,5 +48,5 @@ class Post(BaseModel):
             latitude=post_model.latitude,
             longitude=post_model.longitude,
             created_date=post_model.created_date,
-            updated_date=post_model.updated_date
+            updated_date=post_model.updated_date,
         )

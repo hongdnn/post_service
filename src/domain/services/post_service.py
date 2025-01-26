@@ -21,7 +21,7 @@ class PostServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def fetch_posts(self, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
+    async def fetch_posts(self, user_id: str, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
         pass
 
 
@@ -65,9 +65,9 @@ class PostService(PostServiceInterface):
             print(f"Error: {e}")
             return {"data": None, "status": 1, "message": "There's something wrong"}
 
-    async def fetch_posts(self, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
+    async def fetch_posts(self, user_id: str, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
         try:
-            response = await self._post_repository.fetch_posts(followee_ids, size, date)
+            response = await self._post_repository.fetch_posts(user_id, followee_ids, size, date)
             posts_data = [post.model_dump() for post in response]  # Convert each Post to a dictionary
             return {"data": posts_data, "status": 0, "message": "Fetch posts success"}
         except Exception as e:

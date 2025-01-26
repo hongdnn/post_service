@@ -77,7 +77,7 @@ async def fetch_posts(user_info: dict, post_service: PostService = Provide[Conta
                         followee_data = await followee_response.json()
                         followee_ids = followee_data.get('data', [])
                         followee_ids.append(user_info['id'])
-                        response = await post_service.fetch_posts(followee_ids, size, date)
+                        response = await post_service.fetch_posts(user_info['id'], followee_ids, size, date)
                         if response.get('status') != 0:
                             return jsonify(response), 500
 
@@ -117,9 +117,9 @@ async def fetch_posts(user_info: dict, post_service: PostService = Provide[Conta
 
 
 @post_bp.route('/profile', methods=['GET'])
-@token_required()
+@token_required(required_user_info=True)
 @inject
-async def fetch_profile_posts(post_service: PostService = Provide[Container.post_service]):
+async def fetch_profile_posts(user_info: dict, post_service: PostService = Provide[Container.post_service]):
     """Fetch list of posts in a user profile."""
     try:
         size = request.args.get('size', default=10, type=int)
@@ -132,7 +132,7 @@ async def fetch_profile_posts(post_service: PostService = Provide[Container.post
             except ValueError as e:
                 return jsonify({"error": "Invalid date format", "status": 1, "message": str(e)}), 400
 
-        response = await post_service.fetch_posts([user_id], size, date)
+        response = await post_service.fetch_posts(user_info['id'], [user_id], size, date)
         if response.get('status') != 0:
             return jsonify(response), 500
 
