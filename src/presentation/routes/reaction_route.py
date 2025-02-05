@@ -3,7 +3,7 @@ from marshmallow import ValidationError
 from quart import Blueprint, request, jsonify
 
 from src import Container
-from src.domain.services.reaction_service import ReactionService, ReactionServiceInterface
+from src.domain.services.reaction_service import ReactionServiceInterface
 from src.infrastructure.jwt_handler import token_required
 from src.presentation.schemas.reaction_schema import UpdateReactionSchema
 
@@ -14,7 +14,8 @@ update_reaction_schema = UpdateReactionSchema()
 @reaction_bp.route('', methods=['POST'])
 @token_required(required_user_info=True)
 @inject
-async def update_reaction(user_info: dict, reaction_service: ReactionServiceInterface = Provide[Container.reaction_service]):
+async def update_reaction(user_info: dict,
+                          reaction_service: ReactionServiceInterface = Provide[Container.reaction_service]):
     """Update user reaction in a post."""
     try:
         data = await request.get_json()

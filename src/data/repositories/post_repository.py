@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
 
-from sqlalchemy import select, func, column, exists, and_, case
+from sqlalchemy import select, func, column
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import joinedload
 
@@ -20,6 +20,10 @@ class PostRepositoryInterface(ABC):
 
     @abstractmethod
     async def fetch_posts(self, request_user_id: str, user_ids: List[str], limit: int, recent_post_time: Optional[datetime] = None) ->list[Post]:
+        pass
+
+    @abstractmethod
+    async def get_post_by_id(self, post_id: str) -> Optional[Post]:
         pass
 
 
@@ -101,3 +105,15 @@ class PostRepository(PostRepositoryInterface):
                     response.append(post_data)
 
                 return response
+
+    async def get_post_by_id(self, post_id: str) -> Optional[Post]:
+        async with self._session() as session:
+            async with session.begin():
+                statement = select(PostModel).where(column(PostModel.id.key) == post_id)
+                result = await session.execute(statement)
+                post_model = result.scalars().first()
+
+                if not post_model:
+                    return None
+
+                return Post.from_model(post_model)

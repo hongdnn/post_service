@@ -8,6 +8,7 @@ from src.data.repositories.post_repository import PostRepository
 from src.data.repositories.reaction_repository import ReactionRepository
 from src.domain.services.post_service import PostService
 from src.domain.services.reaction_service import ReactionService
+from src.infrastructure.kafka.notification_kafka_producer import NotificationKafkaProducer
 
 
 class Container(containers.DeclarativeContainer):
@@ -38,6 +39,9 @@ class Container(containers.DeclarativeContainer):
         aws_secret_access_key=Config.AWS_SECRET_ACCESS_KEY,
     )
 
+    # Kafka producer
+    notification_kafka_producer = providers.Singleton(NotificationKafkaProducer)
+
     post_repository = providers.Factory(
         PostRepository,
         session=async_session
@@ -62,5 +66,7 @@ class Container(containers.DeclarativeContainer):
 
     reaction_service = providers.Factory(
         ReactionService,
-        reaction_repository=reaction_repository
+        reaction_repository=reaction_repository,
+        post_repository=post_repository,
+        notification_kafka_producer=notification_kafka_producer,
     )
