@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - kafka_network
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://EC2-PUBLIC-IPV4:9092,INTERNAL://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SOCKET_RECEIVE_BUFFER_BYTES: 1048576
+      KAFKA_SOCKET_SEND_BUFFER_BYTES: 1048576
+      KAFKA_MAX_MESSAGE_BYTES: 1000000
+      KAFKA_BATCH_SIZE: 32768
+      KAFKA_BUFFER_MEMORY: 33554432
+    networks:
+      - kafka_network
+  post_service:
+    image: <your-ecr-repo-url>/post_service:latest
+    container_name: post_service
+    restart: always
+    depends_on:
+      - kafka
+    ports:
+      - "5001:5001"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks:
+      - kafka_network
+networks:
+  kafka_network:
+    driver: bridge
