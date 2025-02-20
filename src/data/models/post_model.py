@@ -19,5 +19,6 @@ class PostModel(Base):
     # Define relationship with other models
     medias = relationship("MediaModel", back_populates="post")
     reactions = relationship("ReactionModel", back_populates="post")
+    comments = relationship("CommentModel", back_populates="post")
 
 

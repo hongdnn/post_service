@@ -26,6 +26,11 @@ class PostRepositoryInterface(ABC):
     async def get_post_by_id(self, post_id: str) -> Optional[Post]:
         pass
 
+    # when open a post to see detail
+    @abstractmethod
+    async def get_post_detail(self, request_user_id: str, post_id: str) -> Optional[Post]:
+        pass
+
 
 
 class PostRepository(PostRepositoryInterface):
@@ -117,3 +122,55 @@ class PostRepository(PostRepositoryInterface):
                     return None
 
                 return Post.from_model(post_model)
+
+    async def get_post_detail(self, request_user_id: str, post_id: str) -> Optional[Post]:
+        async with self._session() as session:
+            async with session.begin():
+                # Subquery to get reaction counts
+                reaction_subquery = (
+                    select(
+                        ReactionModel.post_id,
+                        func.count(ReactionModel.id).label('reaction_count')
+                    )
+                    .group_by(ReactionModel.post_id)
+                    .subquery()
+                )
+
+                # Subquery to check if the user who requests that reacted to a post
+                user_reaction_count_subquery = (
+                    select(
+                        ReactionModel.post_id,
+                        func.count(ReactionModel.id).label('user_reaction_count')
+                    )
+                    .filter(column(ReactionModel.user_id.key) == request_user_id)
+                    .group_by(ReactionModel.post_id)
+                    .subquery()
+                )
+
+                # Build the base query
+                query = (
+                    select(
+                        PostModel,
+                        func.coalesce(reaction_subquery.c.reaction_count, 0).label('reaction_count'),
+                        func.coalesce(user_reaction_count_subquery.c.user_reaction_count, 0).label(
+                            'user_reaction_count')
+                    )
+                    .options(joinedload(PostModel.medias))
+                    .select_from(PostModel)
+                    .outerjoin(reaction_subquery, column(PostModel.id.key) == reaction_subquery.c.post_id)
+                    .outerjoin(user_reaction_count_subquery, column(PostModel.id.key) == user_reaction_count_subquery.c.post_id)
+                    .where(PostModel.id.__eq__(post_id))
+                )
+
+                # Execute the query
+                result = await session.execute(query)
+                result = result.first()
+
+                if result:
+                    post = result[0]
+                    post_data = Post.from_model(post)
+                    # Add media data (empty list if no media)
+                    post_data.medias = [Media.from_model(media) for media in post.medias] if post.medias else []
+                    post_data.reaction_count = result[1]
+                    post_data.is_reacted = result[2] > 0
+                    return post_data

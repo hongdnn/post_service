@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import re
+from wsgiref.headers import Headers
+
+import aiohttp
 from mypy_boto3_s3.client import S3Client
 
 from src.data.repositories.media_repository import MediaRepositoryInterface
@@ -22,6 +25,10 @@ class PostServiceInterface(ABC):
 
     @abstractmethod
     async def fetch_posts(self, user_id: str, followee_ids: List[str], size: int, date: Optional[datetime] = None) -> Dict[str, Any]:
+        pass
+
+    @abstractmethod
+    async def get_post_detail(self, user_id: str, post_id: str, headers: Headers) -> Dict[str, Any]:
         pass
 
 
@@ -70,6 +77,32 @@ class PostService(PostServiceInterface):
             response = await self._post_repository.fetch_posts(user_id, followee_ids, size, date)
             posts_data = [post.model_dump() for post in response]  # Convert each Post to a dictionary
             return {"data": posts_data, "status": 0, "message": "Fetch posts success"}
+        except Exception as e:
+            print(f"Error: {e}")
+            return {"data": None, "status": 1, "message": "There's something wrong"}
+
+    async def get_post_detail(self, user_id: str, post_id: str, headers: Headers) -> Dict[str, Any]:
+        try:
+            response = await self._post_repository.get_post_detail(user_id, post_id)
+            if response is None:
+                return {"data": None, "status": 2, "message": "Post not found"}
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                        f"{Config.CHAT_SERVICE_BASE_URL}/users/posts",
+                        json={"user_ids": [response.user_id]},
+                        headers={"Authorization": headers.get('Authorization')}
+                ) as user_response:
+                    if user_response.status != 200:
+                        return {"data": None, "status": 2, "message": "Failed to fetch user information"}
+
+                    user_data = await user_response.json()
+                    users = user_data.get('data', [])
+                    if not users:
+                        return {"data": None, "status": 2, "message": "Failed to fetch user information"}
+
+                    post = response.model_dump()
+                    post['user'] = users[0]
+                    return {"data": post, "status": 0, "message": "Fetch post success"}
         except Exception as e:
             print(f"Error: {e}")
             return {"data": None, "status": 1, "message": "There's something wrong"}

@@ -3,9 +3,11 @@ from boto3 import client as boto3_client
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from src import Config
+from src.data.repositories.comment_repository import CommentRepository
 from src.data.repositories.media_repository import MediaRepository
 from src.data.repositories.post_repository import PostRepository
 from src.data.repositories.reaction_repository import ReactionRepository
+from src.domain.services.comment_service import CommentService
 from src.domain.services.post_service import PostService
 from src.domain.services.reaction_service import ReactionService
 from src.infrastructure.kafka.notification_kafka_producer import NotificationKafkaProducer
@@ -42,31 +44,43 @@ class Container(containers.DeclarativeContainer):
     # Kafka producer
     notification_kafka_producer = providers.Singleton(NotificationKafkaProducer)
 
-    post_repository = providers.Factory(
+    post_repository = providers.Singleton(
         PostRepository,
         session=async_session
     )
 
-    media_repository = providers.Factory(
+    media_repository = providers.Singleton(
         MediaRepository,
         session=async_session
     )
 
-    reaction_repository = providers.Factory(
+    reaction_repository = providers.Singleton(
         ReactionRepository,
         session=async_session
     )
 
-    post_service = providers.Factory(
+    comment_repository = providers.Singleton(
+        CommentRepository,
+        session=async_session
+    )
+
+    post_service = providers.Singleton(
         PostService,
         post_repository=post_repository,
         media_repository=media_repository,
         s3_client= s3_client
     )
 
-    reaction_service = providers.Factory(
+    reaction_service = providers.Singleton(
         ReactionService,
         reaction_repository=reaction_repository,
+        post_repository=post_repository,
+        notification_kafka_producer=notification_kafka_producer,
+    )
+
+    comment_service = providers.Singleton(
+        CommentService,
+        comment_repository=comment_repository,
         post_repository=post_repository,
         notification_kafka_producer=notification_kafka_producer,
     )

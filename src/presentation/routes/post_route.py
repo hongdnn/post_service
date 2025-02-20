@@ -160,3 +160,15 @@ async def fetch_profile_posts(user_info: dict, post_service: PostService = Provi
             "status": 1,
             "message": "An error occurred"
         }), 400
+
+
+@post_bp.route('/<post_id>', methods=['GET'])
+@token_required(required_user_info=True)
+@inject
+async def get_post_detail(user_info: dict, post_id: str, post_service: PostService = Provide[Container.post_service]):
+    try:
+        response = await post_service.get_post_detail(user_info['id'], post_id, request.headers)
+        return jsonify(response), 200 if response.get('status') == 0 else 404 if response.get('status') == 2 else 500
+    except Exception as err:
+        print(err)
+        return jsonify({"status": 1, "messages": "There's something wrong"}), 500

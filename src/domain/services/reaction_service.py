@@ -42,7 +42,7 @@ class ReactionService(ReactionServiceInterface):
     async def fetch_and_notify(self, reaction: Reaction):
         try:
             post = await self._post_repository.get_post_by_id(reaction.post_id)
-            if post:
+            if post and post.user_id != reaction.user_id:
                 await self._notification_kafka_producer.post_message(post.user_id, reaction, NotificationType.REACTION)
         except Exception as e:
             print(f"Error in sending kafka message: {e}")
