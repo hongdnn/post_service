@@ -41,7 +41,6 @@ class CommentRepository(CommentRepositoryInterface):
     async def fetch_comments(self, post_id: str, limit: int, page: int) -> list[Comment]:
         async with self._session() as session:
             async with session.begin():
-                print(post_id, page, limit)
                 query = (
                     select(CommentModel)
                     .where(CommentModel.post_id.__eq__(post_id))
@@ -50,6 +49,5 @@ class CommentRepository(CommentRepositoryInterface):
                 )
 
                 result = await session.execute(query)
-                print('list comments:', result)
                 comment_models = result.scalars().all()
                 return [Comment.from_model(model) for model in comment_models]

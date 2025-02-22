@@ -7,6 +7,7 @@ from sqlalchemy import select, func, column
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.orm import joinedload
 
+from src.data.models.comment_model import CommentModel
 from src.data.models.post_model import PostModel
 from src.data.models.reaction_model import ReactionModel
 from src.domain.entities.media import Media
@@ -77,18 +78,30 @@ class PostRepository(PostRepositoryInterface):
                     .subquery()
                 )
 
+                # Subquery to get comment counts
+                comment_subquery = (
+                    select(
+                        CommentModel.post_id,
+                        func.count(CommentModel.id).label('comment_count')
+                    )
+                    .group_by(CommentModel.post_id)
+                    .subquery()
+                )
+
                 # Build the base query
                 query = (
                     select(
                         PostModel,
                         func.coalesce(reaction_subquery.c.reaction_count, 0).label('reaction_count'),
                         func.coalesce(user_reaction_count_subquery.c.user_reaction_count, 0).label(
-                            'user_reaction_count')
+                            'user_reaction_count'),
+                        func.coalesce(comment_subquery.c.comment_count, 0).label('comment_count'),
                     )
                     .options(joinedload(PostModel.medias))
                     .select_from(PostModel)
-                    .outerjoin(reaction_subquery, column(PostModel.id.key) == reaction_subquery.c.post_id)
+                    .outerjoin(reaction_subquery,  PostModel.id.__eq__(reaction_subquery.c.post_id))
                     .outerjoin(user_reaction_count_subquery, column(PostModel.id.key) == user_reaction_count_subquery.c.post_id)
+                    .outerjoin(comment_subquery, PostModel.id.__eq__(comment_subquery.c.post_id))
                     .where(PostModel.user_id.in_(user_ids))
                     .order_by(PostModel.created_date.desc())
                 )
@@ -107,6 +120,7 @@ class PostRepository(PostRepositoryInterface):
                     post_data.medias = [Media.from_model(media) for media in post.medias] if post.medias else []
                     post_data.reaction_count = row[1]
                     post_data.is_reacted = row[2] > 0
+                    post_data.comment_count = row[3]
                     response.append(post_data)
 
                 return response

@@ -17,7 +17,8 @@ class Post(BaseModel):
     created_date: Optional[datetime] = None
     updated_date: Optional[datetime] = None
     medias: Optional[List[Media]] = None
-    reaction_count: Optional[int] = None
+    reaction_count: Optional[int] = 0
+    comment_count: Optional[int] = 0
     is_reacted: Optional[bool] = None
 
 
